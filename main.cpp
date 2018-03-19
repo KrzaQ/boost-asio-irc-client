@@ -1,9 +1,14 @@
 #include <iostream>
 
-using namespace std;
+#include <boost/asio.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
+
+using namespace std::literals;
+
+namespace asio = boost::asio;
 
 int main()
 {
-    cout << "Hello World!" << endl;
-    return 0;
+    asio::io_context io;
+    io.run();
 }
