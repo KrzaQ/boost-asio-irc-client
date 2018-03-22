@@ -22,7 +22,7 @@ client::client(
         [this](auto, auto, std::string_view ping) {
             std::stringstream pong;
             pong << "PONG :" << ping;
-            send(pong.str());
+            send_raw(pong.str());
         }
     );
 
@@ -33,7 +33,7 @@ void client::join(std::string_view channel)
 {
     std::stringstream msg;
     msg << "JOIN " << channel;
-    send(msg.str());
+    send_raw(msg.str());
 }
 
 void client::say(
@@ -42,26 +42,25 @@ void client::say(
 ) {
     std::stringstream msg;
     msg << "PRIVMSG " << receiver << " :" << message;
-    send(msg.str());
+    send_raw(msg.str());
 }
 
-void client::send(std::string_view data)
+void client::send_raw(std::string data)
 {
     std::cout << "Sending: " << data << std::endl;
 
-    to_write.push_back(std::string{data});
-    to_write.back() += "\r\n";
+    data += "\r\n";
+    to_write.push_back(std::move(data));
 
     if(to_write.size() == 1)
-        send_impl();
+        send_raw_impl();
 }
 
 void client::register_handler(
     std::string_view name,
     message_handler handler
 ) {
-    handlers[std::string{name}]
-    .push_back(handler);
+    handlers[std::string{name}].push_back(handler);
 }
 
 void client::register_on_connect(
@@ -92,11 +91,11 @@ void client::identify()
     std::stringstream msg;
     msg << "USER " << settings.nick << " "
            "foo bar :" << settings.nick;
-    send(msg.str());
+    send_raw(msg.str());
 
     msg.str("");
     msg << "NICK " << settings.nick;
-    send(msg.str());
+    send_raw(msg.str());
 }
 
 void client::on_hostname_resolved(
@@ -150,7 +149,7 @@ void client::await_new_line()
 
 void client::on_new_line(
         boost::system::error_code const& error,
-        std::size_t s
+        std::size_t bytes_read
 ) {
     if(error) {
         connect();
@@ -197,7 +196,7 @@ void client::handle_message(
     }
 }
 
-void client::send_impl()
+void client::send_raw_impl()
 {
     if(!to_write.size()) {
         return;
@@ -216,18 +215,20 @@ void client::send_impl()
 
 void client::handle_write(
     boost::system::error_code const& error,
-    std::size_t s
+    std::size_t bytes_read
 ) {
     if(error) {
         std::cout << "Error: " << error << std::endl;
         return;
     }
 
-    if(!to_write.size()) {
+    if(to_write.empty()) {
         return;
     }
 
-    auto to_erase = std::min(s, to_write.front().size());
+    auto to_erase =
+        std::min(bytes_read, to_write.front().size());
+
     auto& buf = to_write.front();
 
     buf.erase(buf.begin(), buf.begin() + to_erase);
@@ -236,7 +237,7 @@ void client::handle_write(
         to_write.erase(to_write.begin());
     }
 
-    send_impl();
+    send_raw_impl();
 }
 
 } // kq::irc

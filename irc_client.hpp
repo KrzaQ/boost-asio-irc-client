@@ -34,18 +34,18 @@ public:
         >;
 
     client(
-        asio::io_context&,
-        irc::settings const&
+        asio::io_context& ctx,
+        irc::settings const& settings
     );
 
-    void join(std::string_view);
+    void join(std::string_view channel);
 
     void say(
         std::string_view receiver,
         std::string_view message
     );
 
-    void send(std::string_view);
+    void send_raw(std::string data);
 
     void register_handler(
         std::string_view name,
@@ -53,7 +53,7 @@ public:
     );
 
     void register_on_connect(
-        std::function<void()>
+        std::function<void()> handler
     );
 
 private:
@@ -63,19 +63,19 @@ private:
     void identify();
 
     void on_hostname_resolved(
-        boost::system::error_code const&,
-        tcp::resolver::results_type
+        boost::system::error_code const& error,
+        tcp::resolver::results_type results
     );
 
     void on_connected(
-        boost::system::error_code const&
+        boost::system::error_code const& error
     );
 
     void await_new_line();
 
     void on_new_line(
-        boost::system::error_code const&,
-        std::size_t
+        boost::system::error_code const& error,
+        std::size_t bytes_read
     );
 
     void handle_message(
@@ -85,11 +85,11 @@ private:
         std::string_view message
     );
 
-    void send_impl();
+    void send_raw_impl();
 
     void handle_write(
-        boost::system::error_code const&,
-        std::size_t
+        boost::system::error_code const& error,
+        std::size_t bytes_read
     );
 
     asio::io_context& ctx;
