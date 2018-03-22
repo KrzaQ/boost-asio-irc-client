@@ -1,6 +1,7 @@
 #ifndef IRC_CLIENT_HPP
 #define IRC_CLIENT_HPP
 
+#include <deque>
 #include <functional>
 #include <string>
 #include <string_view>
@@ -84,6 +85,13 @@ private:
         std::string_view message
     );
 
+    void send_impl();
+
+    void handle_write(
+        boost::system::error_code const&,
+        std::size_t
+    );
+
     asio::io_context& ctx;
     irc::settings settings;
     tcp::socket socket;
@@ -93,6 +101,8 @@ private:
         std::vector<message_handler>
     > handlers;
     std::vector<std::function<void()>> on_connect_handlers;
+
+    std::deque<std::string> to_write;
 };
 
 }

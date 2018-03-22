@@ -49,13 +49,11 @@ void client::send(std::string_view data)
 {
     std::cout << "Sending: " << data << std::endl;
 
-    auto buf = std::make_shared<std::string>(data);
-    *buf += "\r\n";
+    to_write.push_back(std::string{data});
+    to_write.back() += "\r\n";
 
-    socket.async_send(
-        asio::buffer(buf->data(), buf->size()),
-        [buf](auto&&...){}
-    );
+    if(to_write.size() == 1)
+        send_impl();
 }
 
 void client::register_handler(
@@ -197,6 +195,48 @@ void client::handle_message(
     for(auto const& h : handlers[type]) {
         h(who, where, message);
     }
+}
+
+void client::send_impl()
+{
+    if(!to_write.size()) {
+        return;
+    }
+
+    socket.async_send(
+        asio::buffer(
+            to_write.front().data(),
+            to_write.front().size()
+        ),
+        [this](auto&&... params){
+            handle_write(params...);
+        }
+    );
+}
+
+void client::handle_write(
+    boost::system::error_code const& error,
+    std::size_t s
+) {
+    if(error) {
+        std::cout << "Error: " << error << std::endl;
+        return;
+    }
+
+    if(!to_write.size()) {
+        return;
+    }
+
+    auto to_erase = std::min(s, to_write.front().size());
+    auto& buf = to_write.front();
+
+    buf.erase(buf.begin(), buf.begin() + to_erase);
+
+    if(buf.empty()) {
+        to_write.erase(to_write.begin());
+    }
+
+    send_impl();
 }
 
 } // kq::irc
