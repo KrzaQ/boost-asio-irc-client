@@ -1,8 +1,12 @@
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.10)
 
 project(boost-asio-art)
 
-add_executable(${PROJECT_NAME} "main.cpp" "irc_client.cpp" "irc_client.hpp")
+add_executable(${PROJECT_NAME}
+    "main.cpp"
+    "irc_client.cpp"
+    "irc_client.hpp"
+    "regex_explode.hpp")
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -20,3 +24,9 @@ ENDIF(Boost_FOUND)
 SET(USED_LIBS ${Boost_SYSTEM_LIBRARY} ${Boost_REGEX_LIBRARY})
 
 TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${USED_LIBS} pthread)
+
+SET_TARGET_PROPERTIES(${PROJECT_NAME} PROPERTIES
+            CXX_STANDARD 17
+            CXX_EXTENSIONS OFF
+            )
+
