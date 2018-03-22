@@ -39,7 +39,7 @@ void say_time(
         return;
     }
 
-    std::time_t result = std::time(nullptr);
+    auto result = std::time(nullptr);
     std::stringstream reply;
     reply << nick << ": "
           << std::asctime(std::localtime(&result));
