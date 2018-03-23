@@ -170,7 +170,7 @@ void client::on_new_line(
     std::string who, type, where, message;
     kq::explode_regex(
         line.c_str(),
-        server_message,
+        std::regex{server_message},
         std::tie(who, type, where, message)
     );
 
