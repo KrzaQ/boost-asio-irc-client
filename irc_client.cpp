@@ -100,8 +100,8 @@ void client::identify()
 }
 
 void client::on_hostname_resolved(
-        boost::system::error_code const& error,
-        tcp::resolver::results_type results
+    boost::system::error_code const& error,
+    tcp::resolver::results_type results
 ) {
     if(error) {
         connect();
@@ -122,7 +122,7 @@ void client::on_hostname_resolved(
 }
 
 void client::on_connected(
-        boost::system::error_code const& error
+    boost::system::error_code const& error
 ) {
     if(error) {
         connect();
@@ -159,10 +159,12 @@ void client::await_new_line()
 }
 
 void client::on_new_line(
-        std::string const& line
+    std::string const& line
 ) {
     std::cout << "Received: " << line << std::endl;
 
+    // samples of this regex:
+    // https://regex101.com/r/rmIXQS/1
     static auto constexpr server_message =
         R"((?::([^@!\ ]*(?:(?:![^@]*)?@[^\ ]*)?)\ ))"
         R"(?([^\ ]+)((?:[^:\ ][^\ ]*)?(?:\ [^:\ ][^\ ]*))"
@@ -197,7 +199,7 @@ void client::handle_message(
 
 void client::send_raw()
 {
-    if(!to_write.size()) {
+    if(to_write.empty()) {
         return;
     }
 
@@ -217,7 +219,7 @@ void client::handle_write(
     std::size_t bytes_read
 ) {
     if(error) {
-        std::cout << "Error: " << error << std::endl;
+        std::cerr << "Error: " << error << std::endl;
         return;
     }
 

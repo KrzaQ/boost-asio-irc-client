@@ -36,7 +36,7 @@ void say_time(
         receiver = nick;
     }
 
-    if(message != ":time"){
+    if(message != "!time"){
         return;
     }
 
