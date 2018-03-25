@@ -3,6 +3,7 @@
 #include <regex>
 #include <sstream>
 
+#include <boost/algorithm/string/trim.hpp>
 #include <boost/asio.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
@@ -46,6 +47,31 @@ void say_time(
     client.say(receiver, reply.str());
 }
 
+void greet(
+        kq::irc::client& client,
+        std::string_view who,
+        std::string_view where,
+        std::string_view message
+) {
+    std::string nick;
+    kq::extract_regex_groups(
+        who.data(),
+        std::regex{"([^!:]+)"},
+        std::tie(nick)
+    );
+    boost::algorithm::trim(nick);
+
+    std::cout << "NICK: " << nick << std::endl;
+
+    if(nick == client.get_settings().nick) {
+        return;
+    }
+
+    std::string dest{where};
+    boost::algorithm::trim(dest);
+    client.say(dest, "Hello, " + nick + "!");
+}
+
 int main()
 {
     asio::io_context io;
@@ -64,6 +90,10 @@ int main()
 
     irc.register_handler("PRIVMSG", [&](auto&&... views){
         say_time(irc, views...);
+    });
+
+    irc.register_handler("JOIN", [&](auto&&... views){
+        greet(irc, views...);
     });
 
     io.run();

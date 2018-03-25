@@ -56,6 +56,10 @@ public:
         std::function<void()> handler
     );
 
+    auto const& get_settings() const {
+        return settings;
+    }
+
 private:
     using tcp = asio::ip::tcp;
 

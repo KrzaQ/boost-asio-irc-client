@@ -1,5 +1,5 @@
-#ifndef REGEX_EXPLODE_HPP
-#define REGEX_EXPLODE_HPP
+#ifndef EXTRACT_REGEX_GROUPS_HPP
+#define EXTRACT_REGEX_GROUPS_HPP
 
 #include <regex>
 #include <string>
@@ -59,5 +59,4 @@ void extract_regex_groups(
 
 }
 
-
-#endif // REGEX_EXPLODE_HPP
+#endif // EXTRACT_REGEX_GROUPS_HPP
