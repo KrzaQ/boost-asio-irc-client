@@ -35,8 +35,8 @@ void assign_regex_matches(
 
 }
 
-template<typename... Ts, typename Tuple>
-void extrace_regex_groups(
+template<typename Tuple>
+void extract_regex_groups(
     char const* string,
     std::regex const& regex,
     Tuple&& tuple

@@ -4,7 +4,7 @@
 #include <stdexcept>
 
 #include "irc_client.hpp"
-#include "regex_explode.hpp"
+#include "extract_regex_groups.hpp"
 
 namespace kq::irc
 {
@@ -22,7 +22,7 @@ client::client(
         [this](auto, auto, std::string_view ping) {
             std::stringstream pong;
             pong << "PONG :" << ping;
-            send_raw(pong.str());
+            send_line(pong.str());
         }
     );
 
@@ -33,7 +33,7 @@ void client::join(std::string_view channel)
 {
     std::stringstream msg;
     msg << "JOIN " << channel;
-    send_raw(msg.str());
+    send_line(msg.str());
 }
 
 void client::say(
@@ -42,10 +42,10 @@ void client::say(
 ) {
     std::stringstream msg;
     msg << "PRIVMSG " << receiver << " :" << message;
-    send_raw(msg.str());
+    send_line(msg.str());
 }
 
-void client::send_raw(std::string data)
+void client::send_line(std::string data)
 {
     std::cout << "Sending: " << data << std::endl;
 
@@ -53,14 +53,14 @@ void client::send_raw(std::string data)
     to_write.push_back(std::move(data));
 
     if(to_write.size() == 1)
-        send_raw_impl();
+        send_raw();
 }
 
 void client::register_handler(
-    std::string_view name,
+    std::string name,
     message_handler handler
 ) {
-    handlers[std::string{name}].push_back(handler);
+    handlers[std::move(name)].push_back(handler);
 }
 
 void client::register_on_connect(
@@ -71,6 +71,7 @@ void client::register_on_connect(
 
 void client::connect()
 {
+    socket.close();
     tcp::resolver resolver(ctx);
 
     auto handler = [this](auto&&... params) {
@@ -91,11 +92,11 @@ void client::identify()
     std::stringstream msg;
     msg << "USER " << settings.nick << " "
            "foo bar :" << settings.nick;
-    send_raw(msg.str());
+    send_line(msg.str());
 
     msg.str("");
     msg << "NICK " << settings.nick;
-    send_raw(msg.str());
+    send_line(msg.str());
 }
 
 void client::on_hostname_resolved(
@@ -142,24 +143,24 @@ void client::on_connected(
 void client::await_new_line()
 {
     auto handler = [this](auto const& error, std::size_t s) {
-        on_new_line(error, s);
+        if(error) {
+            connect();
+            return;
+        }
+
+        std::istream i{&in_buf};
+        std::string line;
+        std::getline(i, line);
+
+        on_new_line(line);
+        await_new_line();
     };
     asio::async_read_until(socket, in_buf, "\r\n", handler);
 }
 
 void client::on_new_line(
-        boost::system::error_code const& error,
-        std::size_t bytes_read
+        std::string const& line
 ) {
-    if(error) {
-        connect();
-        return;
-    }
-
-    std::istream i{&in_buf};
-    std::string line;
-    std::getline(i, line);
-
     std::cout << "Received: " << line << std::endl;
 
     static auto constexpr server_message =
@@ -168,7 +169,7 @@ void client::on_new_line(
         R"({0,14})(?:\ :?(.*))?)";
 
     std::string who, type, where, message;
-    kq::explode_regex(
+    kq::extract_regex_groups(
         line.c_str(),
         std::regex{server_message},
         std::tie(who, type, where, message)
@@ -181,8 +182,6 @@ void client::on_new_line(
               << std::endl;
 
     handle_message(who, type, where, message);
-
-    await_new_line();
 }
 
 void client::handle_message(
@@ -196,7 +195,7 @@ void client::handle_message(
     }
 }
 
-void client::send_raw_impl()
+void client::send_raw()
 {
     if(!to_write.size()) {
         return;
@@ -222,10 +221,6 @@ void client::handle_write(
         return;
     }
 
-    if(to_write.empty()) {
-        return;
-    }
-
     auto to_erase =
         std::min(bytes_read, to_write.front().size());
 
@@ -237,7 +232,9 @@ void client::handle_write(
         to_write.erase(to_write.begin());
     }
 
-    send_raw_impl();
+    if(!to_write.empty()) {
+        send_raw();
+    }
 }
 
 } // kq::irc

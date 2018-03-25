@@ -9,11 +9,11 @@
 
 #include <boost/asio.hpp>
 
-namespace asio = boost::asio;
-using tcp = asio::ip::tcp;
-
 namespace kq::irc
 {
+
+namespace asio = boost::asio;
+
 struct settings
 {
     std::string host;
@@ -45,10 +45,10 @@ public:
         std::string_view message
     );
 
-    void send_raw(std::string data);
+    void send_line(std::string data);
 
     void register_handler(
-        std::string_view name,
+        std::string name,
         message_handler handler
     );
 
@@ -57,6 +57,7 @@ public:
     );
 
 private:
+    using tcp = asio::ip::tcp;
 
     void connect();
 
@@ -74,8 +75,7 @@ private:
     void await_new_line();
 
     void on_new_line(
-        boost::system::error_code const& error,
-        std::size_t bytes_read
+        std::string const& line
     );
 
     void handle_message(
@@ -85,7 +85,7 @@ private:
         std::string_view message
     );
 
-    void send_raw_impl();
+    void send_raw();
 
     void handle_write(
         boost::system::error_code const& error,

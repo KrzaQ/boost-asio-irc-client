@@ -6,7 +6,7 @@ add_executable(${PROJECT_NAME}
     "main.cpp"
     "irc_client.cpp"
     "irc_client.hpp"
-    "extrace_regex_groups.hpp")
+    "extract_regex_groups.hpp")
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)

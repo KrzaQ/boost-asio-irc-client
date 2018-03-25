@@ -7,7 +7,7 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 
 #include "irc_client.hpp"
-#include "regex_explode.hpp"
+#include "extract_regex_groups.hpp"
 
 using namespace std::literals;
 
@@ -20,9 +20,9 @@ void say_time(
     std::string_view message
 ) {
     std::string nick;
-    kq::explode_regex(
+    kq::extract_regex_groups(
         who.data(),
-        "([^!:]+)",
+        std::regex{"([^!:]+)"},
         std::tie(nick)
     );
 
@@ -48,18 +48,18 @@ void say_time(
 
 int main()
 {
-    asio::io_service io;
+    asio::io_context io;
 
     kq::irc::settings settings{
-        "irc.quakenet.org",
+        "irc.freenode.org",
         6667,
-        "Vesumon"
+        "ProgMag"
     };
 
     kq::irc::client irc{io, settings};
 
     irc.register_handler("001", [&](auto&&...){
-        irc.join("#krzaq");
+        irc.join("#progmag");
     });
 
     irc.register_handler("PRIVMSG", [&](auto&&... views){
