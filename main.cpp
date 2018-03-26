@@ -48,10 +48,10 @@ void say_time(
 }
 
 void greet(
-        kq::irc::client& client,
-        std::string_view who,
-        std::string_view where,
-        std::string_view message
+    kq::irc::client& client,
+    std::string_view who,
+    std::string_view where,
+    std::string_view message
 ) {
     std::string nick;
     kq::extract_regex_groups(

@@ -52,6 +52,9 @@ void client::send_line(std::string data)
     data += "\r\n";
     to_write.push_back(std::move(data));
 
+    // if size == 1 then there is only the line we've just
+    // added. Nothing is being sent at this moment so we can
+    // safely proceed to send the new message.
     if(to_write.size() == 1)
         send_raw();
 }
